@@ -8,14 +8,16 @@ app = Flask(__name__)
 def voice():
     response = VoiceResponse()
     
-    # Enhanced voice with better quality settings
+    # Enhanced voice with volume boost
     response.say(
         "Hello! You've reached AIQsocials, your premier AI automation agency. "
         "I'm Sarah, your dedicated AI assistant. We're currently fine-tuning "
         "your personalized AI solutions. Please call back in just a few minutes "
         "and I'll be ready to help you grow your business!",
-        voice='Polly.Joanna',  # More natural female voice
-        language='en-US'
+        voice='Polly.Joanna',
+        language='en-US',
+        rate='medium',  # Optimal speech rate
+        volume='loud'   # Amplify volume
     )
     
     return str(response)
