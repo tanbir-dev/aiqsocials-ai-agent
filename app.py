@@ -7,9 +7,18 @@ app = Flask(__name__)
 @app.route('/voice', methods=['POST'])
 def voice():
     response = VoiceResponse()
-    response.say("Hi, you've reached AIQsocials! I'm Sarah, your AI assistant. We're getting your AI agent ready. Please call back in 5 minutes!")
+    
+    # Enhanced voice with better quality settings
+    response.say(
+        "Hello! You've reached AIQsocials, your premier AI automation agency. "
+        "I'm Sarah, your dedicated AI assistant. We're currently fine-tuning "
+        "your personalized AI solutions. Please call back in just a few minutes "
+        "and I'll be ready to help you grow your business!",
+        voice='Polly.Joanna',  # More natural female voice
+        language='en-US'
+    )
+    
     return str(response)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-
