@@ -8,7 +8,7 @@ def voice():
     response = VoiceResponse()
     gather = Gather(input='speech', timeout=8, action='/respond', method='POST')
     gather.say(
-        "Hello! You've reached AIQsocials. I'm Sarah, your AI assistant. "
+        "Hello! You've reached A-I-Q-socials. I'm Sarah, your AI assistant."
         "What's your heating, cooling, or plumbing issue today?",
         voice='Polly.Joanna', 
         language='en-US', 
@@ -119,18 +119,18 @@ def confirm_tomorrow():
     response.append(gather)
     
     return str(response)
-
+    
 @app.route('/final_confirm', methods=['POST'])
 def final_confirm():
-    additional = request.form.get('SpeechResult', '').lower()
+    user_response = request.form.get('SpeechResult', '').lower()
     response = VoiceResponse()
     
-    if 'no' in additional or 'nothing' in additional:
-        response.say("Wonderful! Thank you for choosing AIQsocials. Have a great day!", 
+    # Streamlined conditional logic - fewer checks, faster processing
+    if any(word in user_response for word in ['no', 'nothing', 'good', 'fine']):
+        response.say("Wonderful! Thank you for choosing A-I-Q-socials. Have a great day!", 
                     voice='Polly.Joanna', rate='medium', volume='loud')
     else:
-        response.say("I'd be happy to help with that as well. Our technician will discuss that with you during your appointment. "
-                    "Thank you for choosing AIQsocials!", 
+        response.say("Our technician will handle that too. Thank you for choosing A-I-Q-socials!", 
                     voice='Polly.Joanna', rate='medium', volume='loud')
     
     response.hangup()
