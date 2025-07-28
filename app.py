@@ -18,34 +18,43 @@ def parse_intent(speech):
             return intent
     return 'unknown'
 
-# 🎙 Entry voice route
+# 🎙 Entry voice route - FIXED PAUSE
 @app.route('/voice', methods=['POST'])
 def voice():
     response = VoiceResponse()
-    gather = Gather(input='speech', timeout=8, action='/respond', method='POST')
     
-    gather.say("Hello! You've reached A-I-Q-socials. I'm Sarah, your AI assistant.",
-               voice='Polly.Joanna', rate='medium', volume='loud')
-    gather.pause(length=1.0)
+    response.say("Hello! You've reached A-I-Q-socials. I'm Sarah, your AI assistant.",
+                voice='Polly.Joanna', rate='medium', volume='loud')
+    response.pause(length=1.0)
+    
+    gather = Gather(input='speech', timeout=8, action='/respond', method='POST')
     gather.say("What's your heating, cooling, or plumbing issue today?",
                voice='Polly.Joanna', rate='medium', volume='loud')
-    
     response.append(gather)
     response.say("I didn't hear you clearly. Let me transfer you to our team.")
     response.hangup()
     return str(response)
 
-# 🧠 Smart response routing
+# 🧠 Smart response routing - ENHANCED FALLBACK
 @app.route('/respond', methods=['POST'])
 def respond():
-    speech = request.form.get('SpeechResult', '').lower()
+    speech_result = request.values.get('SpeechResult')
     response = VoiceResponse()
 
-    # 🔎 Handle vague inputs like silence or noise
-    if not speech or len(speech.strip()) < 3:
-        response.say("I'm sorry, I didn't quite catch that. Could you repeat your issue clearly?",
+    # 🔍 Flexible fallback handling - No SpeechResult at all
+    if not speech_result:
+        response.say("I didn't hear you clearly. Let me transfer you to our team.",
                      voice='Polly.Joanna', rate='medium', volume='loud')
-        response.redirect('/voice')
+        response.hangup()
+        return str(response)
+    
+    # 🔍 Handle very short/unclear responses
+    speech = speech_result.lower().strip()
+    if len(speech) < 3:
+        gather = Gather(input='speech', timeout=8, action='/respond', method='POST')
+        gather.say("Could you please tell me more about your issue?",
+                   voice='Polly.Joanna', rate='medium', volume='loud')
+        response.append(gather)
         return str(response)
 
     # 🧠 Intent resolution
@@ -71,7 +80,7 @@ def respond():
         response.hangup()
 
     elif intent == 'cancel':
-        response.say("No problem. I won’t book anything for now. Let me know if you need help in the future.",
+        response.say("No problem. I won't book anything for now. Let me know if you need help in the future.",
                      voice='Polly.Joanna', rate='medium', volume='loud')
         response.hangup()
 
