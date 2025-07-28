@@ -1,20 +1,35 @@
 from flask import Flask, request
 from twilio.twiml.voice_response import VoiceResponse, Gather
 
+# Intent keyword map
+intent_map = {
+    'emergency': ['emergency', 'flood', 'leak', 'burst pipe', 'water everywhere', 'no hot water', 'urgent'],
+    'schedule': ['appointment', 'fix', 'schedule', 'today', 'tomorrow', 'book', 'time'],
+    'quote': ['price', 'cost', 'estimate', 'how much', 'charge'],
+    'cancel': ['cancel', 'change', 'reschedule', 'wrong time', 'not needed']
+}
+
+# Intent parser
+def parse_intent(speech):
+    for intent, keywords in intent_map.items():
+        if any(word in speech for word in keywords):
+            return intent
+    return 'unknown'
+
 app = Flask(__name__)
 
 @app.route('/voice', methods=['POST'])
 def voice():
     response = VoiceResponse()
     gather = Gather(input='speech', timeout=8, action='/respond', method='POST')
-    gather.say(
-        "Hello! You've reached A-I-Q-socials. I'm Sarah, your AI assistant."
-        "What's your heating, cooling, or plumbing issue today?",
-        voice='Polly.Joanna', 
-        language='en-US', 
-        rate='medium', 
-        volume='loud'
-    )
+    
+    # 👉 Updated with natural pauses and clear separation
+    gather.say("Hello! You've reached A-I-Q-socials. I'm Sarah, your AI assistant.",
+               voice='Polly.Joanna', rate='medium', volume='loud')
+    gather.pause(length=1.0)  # Adds a realistic pause
+    gather.say("What's your heating, cooling, or plumbing issue today?",
+               voice='Polly.Joanna', rate='medium', volume='loud')
+    
     response.append(gather)
     response.say("I didn't hear you clearly. Let me transfer you to our team.")
     response.hangup()
@@ -24,6 +39,46 @@ def voice():
 def respond():
     speech = request.form.get('SpeechResult', '').lower()
     response = VoiceResponse()
+    
+if not speech or len(speech.strip()) < 3:
+    response.say("I'm sorry, I didn't quite catch that. Could you repeat your issue clearly?",
+                 voice='Polly.Joanna', rate='medium', volume='loud')
+    response.redirect('/voice')  # Replays the intro and question
+    return str(response)
+
+      # 🧠 Parse intent from speech
+    intent = parse_intent(speech)
+
+    if intent == 'emergency':
+        gather = Gather(input='speech', timeout=10, action='/emergency_address', method='POST')
+        gather.say("That sounds like an emergency! I need to get you help right away. "
+                   "Can you please give me your complete address?",
+                   voice='Polly.Joanna', rate='medium', volume='loud')
+        response.append(gather)
+
+    elif intent == 'schedule':
+        gather = Gather(input='speech', timeout=8, action='/schedule', method='POST')
+        gather.say("I understand. Do you need this fixed today or can it wait until tomorrow?",
+                   voice='Polly.Joanna', rate='medium', volume='loud')
+        response.append(gather)
+
+    elif intent == 'quote':
+        response.say("Our service pricing typically ranges from 150 to 300 dollars depending on the issue. "
+                     "Would you like me to connect you with a technician for more details?",
+                     voice='Polly.Joanna', rate='medium', volume='loud')
+        response.hangup()
+
+    elif intent == 'cancel':
+        response.say("No problem. I won’t book anything for now. Let me know if you need help in the future.",
+                     voice='Polly.Joanna', rate='medium', volume='loud')
+        response.hangup()
+
+    else:
+        response.say("Thank you for sharing that. Our support team will review your issue and contact you shortly.",
+                     voice='Polly.Joanna', rate='medium', volume='loud')
+        response.hangup()
+
+    return str(response)
     
     # Enhanced emergency detection
     emergency_words = ['flood', 'flooding', 'leak', 'leaking', 'emergency', 'broken pipe', 
